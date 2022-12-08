@@ -121,6 +121,7 @@ namespace {
         v->startFen = "rnsmksnr/8/pppppppp/8/8/PPPPPPPP/8/RNSKMSNR w DEde - 0 1";
         v->gating = true;
         v->cambodianMoves = true;
+        v->countingRule = CAMBODIAN_COUNTING;
         v->nnueAlias = "makruk";
         return v;
     }
@@ -402,6 +403,17 @@ namespace {
     Variant* atomic_variant() {
         Variant* v = nocheckatomic_variant()->init();
         v->extinctionPseudoRoyal = true;
+        return v;
+    }
+    // Duck chess
+    Variant* duck_variant() {
+        Variant* v = chess_variant_base()->init();
+        v->remove_piece(KING);
+        v->add_piece(COMMONER, 'k');
+        v->castlingKingPiece = COMMONER;
+        v->extinctionValue = -VALUE_MATE;
+        v->extinctionPieceTypes = {COMMONER};
+        v->duck = true;
         return v;
     }
     // Three-check chess
@@ -1475,6 +1487,7 @@ void VariantMap::init() {
     add("horde", horde_variant());
     add("nocheckatomic", nocheckatomic_variant());
     add("atomic", atomic_variant());
+    add("duck", duck_variant());
     add("3check", threecheck_variant());
     add("5check", fivecheck_variant());
     add("crazyhouse", crazyhouse_variant());
