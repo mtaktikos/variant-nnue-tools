@@ -2920,6 +2920,7 @@ namespace Search
           ttMove,
           depth,
           &(thread->mainHistory),
+          &(thread->duckHistory),
           &(thread->lowPlyHistory),
           &(thread->captureHistory),
           contHist,
