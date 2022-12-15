@@ -116,7 +116,7 @@ Value Endgame<KXK>::operator()(const Position& pos) const {
 
   // Stalemate detection with lone king
   if (pos.side_to_move() == weakSide && !MoveList<LEGAL>(pos).size())
-      return VALUE_DRAW;
+      return VALUE_VIRTUAL_LOSS;
 
   Square strongKing = pos.square<KING>(strongSide);
   Square weakKing   = pos.square<KING>(weakSide);
@@ -172,8 +172,8 @@ Value Endgame<KBNK>::operator()(const Position& pos) const {
 template<>
 Value Endgame<KPK>::operator()(const Position& pos) const {
 
-  assert(verify_material(pos, strongSide, VALUE_ZERO, 1));
-  assert(verify_material(pos, weakSide, VALUE_ZERO, 0));
+  assert(verify_material(pos, strongSide, 3000, 1));
+  assert(verify_material(pos, weakSide, -3000, 0));
 
   // Assume strongSide is white and the pawn is on files A-D
   Square strongKing = normalize(pos, strongSide, pos.square<KING>(strongSide));
@@ -192,7 +192,7 @@ Value Endgame<KPK>::operator()(const Position& pos) const {
   }
 
   if (!Bitbases::probe(strongKing, strongPawn, weakKing, us))
-      return VALUE_DRAW;
+      return VALUE_VIRTUAL_MATE;
 
   Value result = VALUE_KNOWN_WIN + PawnValueEg + Value(rank_of(strongPawn));
 
