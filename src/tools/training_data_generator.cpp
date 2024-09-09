@@ -371,6 +371,12 @@ namespace Stockfish::Tools
                     // Result is added after the whole game is done.
                     pos.sfen_pack(psv.sfen);
 
+                    // For check counting variants the training target should subtract the check bonus
+                    if (pos.check_counting())
+                    {
+                        search_value -=  6 * 1200 / (5 * pos.checks_remaining( pos.side_to_move()))
+                                       - 6 * 1200 / (5 * pos.checks_remaining(~pos.side_to_move()));
+                    }
                     psv.score = search_value;
                     psv.move = search_pv[0];
                     psv.gamePly = ply;
