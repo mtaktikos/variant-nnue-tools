@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <cassert>
 #include <cmath>
+#include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -365,6 +366,83 @@ void search_mcts_cmd(Position& pos, istringstream& is)
     }
   }
 
+  // write_trainer_config() writes the variant.h and variant.py for the trainer
+  void write_trainer_config(istringstream& is) {
+    string variant = Options["UCI_Variant"];
+    string path = "";
+
+    is >> variant;
+    ostream* varianth = &std::cerr;
+    ostream* variantpy = &std::cerr;
+    ofstream out1;
+    ofstream out2;
+    if (std::getline(is >> std::ws, path) && !path.empty())
+    {
+        path.erase(path.find_last_not_of(" \t\n\r\f\v") + 1);
+        out1.open(path + "/variant.h");
+        out2.open(path + "/variant.py");
+        if (out1.is_open())
+            varianth = &out1;
+        if (out2.is_open())
+            variantpy = &out2;
+    }
+
+    const Variant* v = variants.find(variant)->second;
+    std::cerr << "Writing config for variant " + variant << std::endl;
+
+    const int dataSize = (v->maxFile + 1) * (v->maxRank + 1) + v->nnueMaxPieces * 5
+                        + popcount(v->pieceTypes) * 2 * 5 + 50 > 512 ? 1024 : 512;
+
+    if (dataSize > DATA_SIZE)
+        std::cerr << std::endl << "Warning: Recommended training data size " << dataSize
+                  << " not compatible with current version. "
+                  << "Please recompile with largedata=yes" << std::endl << std::endl;
+
+    if (out1.is_open())
+        std::cerr << "Writing variant.h to " << path << std::endl;
+    else
+        std::cerr << "---------------- variant.h ---------------------" << std::endl;
+    *varianth
+    << "#define FILES " << v->maxFile + 1 << std::endl
+    << "#define RANKS " << v->maxRank + 1 << std::endl
+    << "#define PIECE_TYPES " << popcount(v->pieceTypes) << std::endl
+    << "#define PIECE_COUNT " << v->nnueMaxPieces << std::endl
+    << "#define POCKETS " << (v->nnueUsePockets ? "true" : "false") << std::endl
+    << "#define KING_SQUARES " << v->nnueKingSquare << std::endl
+    << "#define DATA_SIZE " << DATA_SIZE << std::endl;
+
+    if (out1.is_open()) {
+        out1.close();
+    }
+
+    if (out2.is_open())
+        std::cerr << "Writing variant.py to " << path << std::endl;
+    else
+        std::cerr << "---------------- variant.py --------------------" << std::endl;
+    *variantpy
+    << "RANKS = " << v->maxRank + 1 << std::endl
+    << "FILES = " << v->maxFile + 1 << std::endl
+    << "SQUARES = RANKS * FILES" << std::endl
+    << "KING_SQUARES = " << v->nnueKingSquare << std::endl
+    << "PIECE_TYPES = " << popcount(v->pieceTypes) << std::endl
+    << "PIECES = 2 * PIECE_TYPES" << std::endl
+    << "USE_POCKETS = " << (v->nnueUsePockets ? "True" : "False") << std::endl
+    << "POCKETS = 2 * FILES if USE_POCKETS else 0" << std::endl
+    << std::endl
+    << "PIECE_VALUES = {" << std::endl;
+    for (PieceSet ps = v->pieceTypes; ps;)
+    {
+        PieceType pt = pop_lsb(ps);
+        if (pt != v->nnueKing)
+            *variantpy << "  " << v->pieceIndex[pt] + 1 << ": " << PieceValue[MG][pt] << "," << std::endl;
+    }
+    *variantpy << "}" << std::endl;
+
+    if (out2.is_open()) {
+        out2.close();
+    }
+  }
+
 
 /// UCI::loop() waits for a command from stdin, parses it and calls the appropriate
 /// function. Also intercepts EOF from stdin to ensure gracefully exiting if the
@@ -479,6 +557,7 @@ void UCI::loop(int argc, char* argv[]) {
       }
       else if (token == "load")     { load(is); argc = 1; } // continue reading stdin
       else if (token == "check")    load(is, true);
+      else if (token == "trainer_config") write_trainer_config(is);
       // UCI-Cyclone omits the "position" keyword
       else if (token == "fen" || token == "startpos")
       {

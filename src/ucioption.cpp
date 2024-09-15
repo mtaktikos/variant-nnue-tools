@@ -97,45 +97,6 @@ void on_variant_change(const Option &o) {
 
     const Variant* v = variants.find(o)->second;
 
-    const int dataSize = (v->maxFile + 1) * (v->maxRank + 1) + v->nnueMaxPieces * 5
-                        + popcount(v->pieceTypes) * 2 * 5 + 50 > 512 ? 1024 : 512;
-
-    if (dataSize > DATA_SIZE)
-        std::cerr << std::endl << "Warning: Recommended training data size " << dataSize
-                  << " not compatible with current version. "
-                  << "Please recompile with largedata=yes" << std::endl << std::endl;
-
-    std::cerr<< std::endl
-    << "---------------- variant.h ---------------------" << std::endl
-    << "#define FILES " << v->maxFile + 1 << std::endl
-    << "#define RANKS " << v->maxRank + 1 << std::endl
-    << "#define PIECE_TYPES " << popcount(v->pieceTypes) << std::endl
-    << "#define PIECE_COUNT " << v->nnueMaxPieces << std::endl
-    << "#define POCKETS " << (v->nnueUsePockets ? "true" : "false") << std::endl
-    << "#define KING_SQUARES " << v->nnueKingSquare << std::endl
-    << "#define DATA_SIZE " << DATA_SIZE << std::endl
-    << "------------------------------------------------" << std::endl;
-
-    std::cerr << std::endl
-    << "---------------- variant.py --------------------" << std::endl
-    << "RANKS = " << v->maxRank + 1 << std::endl
-    << "FILES = " << v->maxFile + 1 << std::endl
-    << "SQUARES = RANKS * FILES" << std::endl
-    << "KING_SQUARES = " << v->nnueKingSquare << std::endl
-    << "PIECE_TYPES = " << popcount(v->pieceTypes) << std::endl
-    << "PIECES = 2 * PIECE_TYPES" << std::endl
-    << "USE_POCKETS = " << (v->nnueUsePockets ? "True" : "False") << std::endl
-    << "POCKETS = 2 * FILES if USE_POCKETS else 0" << std::endl
-    << std::endl
-    << "PIECE_VALUES = {" << std::endl;
-    for (PieceSet ps = v->pieceTypes; ps;)
-    {
-        PieceType pt = pop_lsb(ps);
-        if (pt != v->nnueKing)
-            std::cerr << "  " << v->pieceIndex[pt] + 1 << ": " << PieceValue[MG][pt] << "," << std::endl;
-    }
-    std::cerr << "}" << std::endl
-    << "------------------------------------------------" << std::endl;
     // Do not send setup command for known variants
     if (standard_variants.find(o) != standard_variants.end())
         return;
