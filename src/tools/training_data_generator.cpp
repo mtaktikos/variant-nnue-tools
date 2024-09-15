@@ -53,7 +53,7 @@ namespace Stockfish::Tools
 
             // Upper limit of evaluation value of generated situation
             int eval_limit = 3000;
-            int eval_diff_limit = 500;
+            int eval_diff_limit = 64000;
 
             // minimum ply with random move
             // maximum ply with random move
@@ -75,27 +75,27 @@ namespace Stockfish::Tools
             // and the evaluation value of the move of the Nth place is.
             // Must be in the range random_multi_pv_diff.
             // random_multi_pv_depth is the search depth for MultiPV.
-            int random_multi_pv = 0;
-            int random_multi_pv_diff = 32000;
+            int random_multi_pv = 5;
+            int random_multi_pv_diff = 100;
             int random_multi_pv_depth = -1;
 
             // The minimum and maximum ply (number of steps from
             // the initial phase) of the sfens to write out.
-            int write_minply = 16;
+            int write_minply = 5;
             int write_maxply = 400;
 
             uint64_t save_every = std::numeric_limits<uint64_t>::max();
 
             std::string output_file_name = "training_data";
 
-            SfenOutputType sfen_format = SfenOutputType::Binpack;
+            SfenOutputType sfen_format = SfenOutputType::Bin;
 
             std::string seed;
 
             float write_out_draw_game_in_training_data_generation = 1;
             bool detect_draw_by_consecutive_low_score = true;
             bool detect_draw_by_insufficient_mating_material = true;
-            bool filter_captures = false;
+            bool filter_captures = true;
             bool filter_checks = false;
             bool filter_promotions = false;
 
@@ -749,13 +749,13 @@ namespace Stockfish::Tools
     void generate_training_data(istringstream& is)
     {
         // Number of generated game records default = 8 billion phases (Ponanza specification)
-        uint64_t loop_max = 8000000000UL;
+        uint64_t loop_max = 100000000UL;
 
         TrainingDataGenerator::Params params;
 
         // Add a random number to the end of the file name.
         bool random_file_name = false;
-        std::string sfen_format = "binpack";
+        std::string sfen_format = "bin";
 
         string token;
         while (true)
@@ -844,8 +844,6 @@ namespace Stockfish::Tools
         {
             if (sfen_format == "bin")
                 params.sfen_format = SfenOutputType::Bin;
-            else if (sfen_format == "binpack")
-                params.sfen_format = SfenOutputType::Binpack;
             else
                 cout << "WARNING: Unknown sfen format `" << sfen_format << "`. Using bin\n";
         }
